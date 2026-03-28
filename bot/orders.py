@@ -29,6 +29,7 @@ def _normalise_response(raw: dict) -> dict:
         "origQty": raw.get("origQty"),
         "executedQty": raw.get("executedQty"),
         "avgPrice": raw.get("avgPrice") or raw.get("price") or "N/A",
+        "stopPrice": raw.get("stopPrice"),
         "status": raw.get("status"),
         "timeInForce": raw.get("timeInForce", "N/A"),
         "updateTime": raw.get("updateTime"),
@@ -84,6 +85,9 @@ def place_stop_market_order(
     """
     Bonus order type – STOP_MARKET triggers a market order once
     the mark price crosses stop_price.
+
+    For a SELL stop: stopPrice must be below current market price.
+    For a BUY stop:  stopPrice must be above current market price.
     """
     logger.debug(
         "Building STOP_MARKET order params symbol=%s side=%s qty=%s stopPrice=%s",
@@ -95,6 +99,6 @@ def place_stop_market_order(
         type="STOP_MARKET",
         quantity=quantity,
         stopPrice=stop_price,
-        closePosition="false",
+        workingType="MARK_PRICE",
     )
     return _normalise_response(raw)

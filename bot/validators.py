@@ -49,24 +49,23 @@ def validate_quantity(qty: str) -> float:
 
 def validate_price(price: str | None, order_type: str) -> float | None:
     """
-    Price is required for LIMIT orders, must not be supplied for MARKET orders.
-    For STOP_MARKET we still allow an optional stopPrice to be passed separately,
-    so this function just handles the main price field.
+    Price rules per order type:
+      MARKET     – price must not be provided
+      LIMIT      – price is required
+      STOP_MARKET – price is required (used as the stopPrice trigger)
     """
     if order_type == "MARKET":
         if price is not None:
             raise ValidationError("Price should not be provided for MARKET orders.")
         return None
 
-    if order_type in ("LIMIT", "STOP_MARKET"):
-        if price is None:
-            raise ValidationError(f"Price is required for {order_type} orders.")
-        try:
-            value = float(price)
-        except (TypeError, ValueError):
-            raise ValidationError(f"Price must be a number, got '{price}'.")
-        if value <= 0:
-            raise ValidationError(f"Price must be positive, got {value}.")
-        return value
-
-    return None
+    # LIMIT and STOP_MARKET both need a price
+    if price is None:
+        raise ValidationError(f"--price is required for {order_type} orders.")
+    try:
+        value = float(price)
+    except (TypeError, ValueError):
+        raise ValidationError(f"Price must be a number, got '{price}'.")
+    if value <= 0:
+        raise ValidationError(f"Price must be positive, got {value}.")
+    return value
