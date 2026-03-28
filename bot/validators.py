@@ -7,7 +7,7 @@ unit-test validation independently.
 from __future__ import annotations
 
 VALID_SIDES = {"BUY", "SELL"}
-VALID_ORDER_TYPES = {"MARKET", "LIMIT", "STOP_MARKET"}
+VALID_ORDER_TYPES = {"MARKET", "LIMIT", "BATCH"}
 
 
 class ValidationError(Exception):
@@ -50,16 +50,15 @@ def validate_quantity(qty: str) -> float:
 def validate_price(price: str | None, order_type: str) -> float | None:
     """
     Price rules per order type:
-      MARKET     – price must not be provided
-      LIMIT      – price is required
-      STOP_MARKET – price is required (used as the stopPrice trigger)
+      MARKET – price must not be provided
+      LIMIT  – price is required
+      BATCH  – price not used here (prices come via --prices flag)
     """
-    if order_type == "MARKET":
-        if price is not None:
+    if order_type in ("MARKET", "BATCH"):
+        if price is not None and order_type == "MARKET":
             raise ValidationError("Price should not be provided for MARKET orders.")
         return None
 
-    # LIMIT and STOP_MARKET both need a price
     if price is None:
         raise ValidationError(f"--price is required for {order_type} orders.")
     try:
@@ -69,3 +68,20 @@ def validate_price(price: str | None, order_type: str) -> float | None:
     if value <= 0:
         raise ValidationError(f"Price must be positive, got {value}.")
     return value
+
+
+def validate_prices(prices_str: str | None, order_type: str) -> list[float]:
+    """Validates the --prices argument used for BATCH orders."""
+    if order_type != "BATCH":
+        return []
+    if not prices_str:
+        raise ValidationError("--prices is required for BATCH orders. Example: --prices 60000,61000,62000")
+    try:
+        values = [float(p.strip()) for p in prices_str.split(",")]
+    except ValueError:
+        raise ValidationError(f"--prices must be comma-separated numbers, got '{prices_str}'.")
+    if any(v <= 0 for v in values):
+        raise ValidationError("All prices must be positive.")
+    if len(values) > 5:
+        raise ValidationError("Batch orders are limited to 5 price levels.")
+    return values

@@ -5,7 +5,7 @@ cli.py – Command-line entry point for the Binance Futures Testnet trading bot.
 Usage examples:
   python cli.py --symbol BTCUSDT --side BUY  --type MARKET --quantity 0.01
   python cli.py --symbol ETHUSDT --side SELL --type LIMIT  --quantity 0.1 --price 2500
-  python cli.py --symbol BTCUSDT --side SELL --type STOP_MARKET --quantity 0.01 --price 58000
+  python cli.py --symbol BTCUSDT --side BUY  --type BATCH  --quantity 0.01 --prices 60000,61000,62000
 """
 
 from __future__ import annotations
@@ -19,11 +19,12 @@ from dotenv import load_dotenv
 
 from bot.client import BinanceAPIError, BinanceFuturesClient, NetworkError
 from bot.logging_config import setup_logging
-from bot.orders import place_limit_order, place_market_order, place_stop_market_order
+from bot.orders import place_batch_limit_orders, place_limit_order, place_market_order
 from bot.validators import (
     ValidationError,
     validate_order_type,
     validate_price,
+    validate_prices,
     validate_quantity,
     validate_side,
     validate_symbol,
@@ -51,6 +52,8 @@ def _print_request_summary(args: argparse.Namespace) -> None:
     print(f"  Quantity : {args.quantity}")
     if args.price:
         print(f"  Price    : {args.price}")
+    if args.prices:
+        print(f"  Prices   : {args.prices}")
     print(f"  Time     : {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC")
     _separator()
     print()
@@ -63,6 +66,18 @@ def _print_order_result(result: dict) -> None:
     for key, value in result.items():
         if value is not None:
             print(f"  {key:<14}: {value}")
+    _separator()
+    print()
+
+
+def _print_batch_results(results: list[dict]) -> None:
+    for i, result in enumerate(results, 1):
+        _separator()
+        print(f"  ORDER {i} RESPONSE")
+        _separator()
+        for key, value in result.items():
+            if value is not None:
+                print(f"  {key:<14}: {value}")
     _separator()
     print()
 
@@ -80,25 +95,21 @@ def build_parser() -> argparse.ArgumentParser:
             "Examples:\n"
             "  python cli.py --symbol BTCUSDT --side BUY  --type MARKET --quantity 0.01\n"
             "  python cli.py --symbol ETHUSDT --side SELL --type LIMIT  --quantity 0.1 --price 2500\n"
-            "  python cli.py --symbol BTCUSDT --side SELL --type STOP_MARKET --quantity 0.01 --price 58000\n"
+            "  python cli.py --symbol BTCUSDT --side BUY  --type BATCH  --quantity 0.01 --prices 60000,61000,62000\n"
         ),
     )
-    parser.add_argument("--symbol",   required=True, help="Trading pair, e.g. BTCUSDT")
-    parser.add_argument("--side",     required=True, help="BUY or SELL")
-    parser.add_argument("--type",     required=True, help="MARKET, LIMIT, or STOP_MARKET")
-    parser.add_argument("--quantity", required=True, help="Order quantity")
-    parser.add_argument(
-        "--price",
-        required=False,
-        default=None,
-        help="Limit / stop price (required for LIMIT and STOP_MARKET)",
-    )
+    parser.add_argument("--symbol",   required=True,  help="Trading pair, e.g. BTCUSDT")
+    parser.add_argument("--side",     required=True,  help="BUY or SELL")
+    parser.add_argument("--type",     required=True,  help="MARKET, LIMIT, or BATCH")
+    parser.add_argument("--quantity", required=True,  help="Order quantity per order")
+    parser.add_argument("--price",    required=False, default=None, help="Limit price (required for LIMIT)")
+    parser.add_argument("--prices",   required=False, default=None, help="Comma-separated prices for BATCH, e.g. 60000,61000,62000")
     parser.add_argument(
         "--tif",
         required=False,
         default="GTC",
         choices=["GTC", "IOC", "FOK"],
-        help="Time-in-force for LIMIT orders (default: GTC)",
+        help="Time-in-force for LIMIT/BATCH orders (default: GTC)",
     )
     return parser
 
@@ -118,6 +129,7 @@ def main() -> None:
         args.type     = validate_order_type(args.type)
         args.quantity = validate_quantity(args.quantity)
         args.price    = validate_price(args.price, args.type)
+        args.prices   = validate_prices(args.prices, args.type)
     except ValidationError as exc:
         logger.error("Validation failed: %s", exc)
         print(f"\n[ERROR] {exc}\n")
@@ -145,20 +157,25 @@ def main() -> None:
     try:
         if args.type == "MARKET":
             result = place_market_order(client, args.symbol, args.side, args.quantity)
+            _print_order_result(result)
+            print(f"[SUCCESS] Order submitted. ID: {result.get('orderId')}  Status: {result.get('status')}\n")
 
         elif args.type == "LIMIT":
             result = place_limit_order(
                 client, args.symbol, args.side, args.quantity, args.price, args.tif
             )
+            _print_order_result(result)
+            print(f"[SUCCESS] Order submitted. ID: {result.get('orderId')}  Status: {result.get('status')}\n")
 
-        elif args.type == "STOP_MARKET":
-            result = place_stop_market_order(
-                client, args.symbol, args.side, args.quantity, args.price
+        elif args.type == "BATCH":
+            results = place_batch_limit_orders(
+                client, args.symbol, args.side, args.quantity, args.prices, args.tif
             )
+            _print_batch_results(results)
+            ids = [str(r.get("orderId")) for r in results]
+            print(f"[SUCCESS] {len(results)} orders submitted. IDs: {', '.join(ids)}\n")
 
         else:
-            # shouldn't reach here because the validator already caught it,
-            # but just in case someone adds a new type without updating the router
             print(f"[ERROR] Unhandled order type: {args.type}")
             sys.exit(1)
 
@@ -176,10 +193,6 @@ def main() -> None:
         logger.exception("Unexpected error while placing order")
         print(f"\n[FAILED] Unexpected error: {exc}\n")
         sys.exit(1)
-
-    # ── print result ──────────────────────────────────────────────────────
-    _print_order_result(result)
-    print(f"[SUCCESS] Order submitted. ID: {result.get('orderId')}  Status: {result.get('status')}\n")
 
 
 if __name__ == "__main__":

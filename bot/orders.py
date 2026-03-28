@@ -29,7 +29,6 @@ def _normalise_response(raw: dict) -> dict:
         "origQty": raw.get("origQty"),
         "executedQty": raw.get("executedQty"),
         "avgPrice": raw.get("avgPrice") or raw.get("price") or "N/A",
-        "stopPrice": raw.get("stopPrice"),
         "status": raw.get("status"),
         "timeInForce": raw.get("timeInForce", "N/A"),
         "updateTime": raw.get("updateTime"),
@@ -75,30 +74,32 @@ def place_limit_order(
     return _normalise_response(raw)
 
 
-def place_stop_market_order(
+def place_batch_limit_orders(
     client: BinanceFuturesClient,
     symbol: str,
     side: str,
     quantity: float,
-    stop_price: float,
-) -> dict[str, Any]:
+    prices: list[float],
+    time_in_force: str = "GTC",
+) -> list[dict[str, Any]]:
     """
-    Bonus order type – STOP_MARKET triggers a market order once
-    the mark price crosses stop_price.
+    Bonus order type – place multiple LIMIT orders at different price levels
+    in a single API call using /fapi/v1/batchOrders.
 
-    For a SELL stop: stopPrice must be below current market price.
-    For a BUY stop:  stopPrice must be above current market price.
+    Useful for laddering into a position across several price levels without
+    making multiple round trips to the exchange.
     """
-    logger.debug(
-        "Building STOP_MARKET order params symbol=%s side=%s qty=%s stopPrice=%s",
-        symbol, side, quantity, stop_price,
-    )
-    raw = client.place_order(
-        symbol=symbol,
-        side=side,
-        type="STOP_MARKET",
-        quantity=quantity,
-        stopPrice=stop_price,
-        workingType="MARK_PRICE",
-    )
-    return _normalise_response(raw)
+    orders = [
+        {
+            "symbol": symbol,
+            "side": side,
+            "type": "LIMIT",
+            "quantity": str(quantity),
+            "price": str(price),
+            "timeInForce": time_in_force,
+        }
+        for price in prices
+    ]
+    logger.debug("Submitting %d batch LIMIT orders at prices %s", len(orders), prices)
+    results = client.place_batch_orders(orders)
+    return [_normalise_response(r) for r in results]

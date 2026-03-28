@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import json
 import time
 import urllib.parse
 from typing import Any
@@ -121,8 +122,8 @@ class BinanceFuturesClient:
 
     def place_order(self, **kwargs) -> dict:
         """
-        Place a futures order.  kwargs are passed straight through as
-        Binance API parameters (symbol, side, type, quantity, price, …).
+        Place a single futures order (MARKET or LIMIT) via /fapi/v1/order.
+        kwargs are passed straight through as Binance API parameters.
         """
         logger.info(
             "Placing order: symbol=%s side=%s type=%s qty=%s price=%s",
@@ -135,6 +136,27 @@ class BinanceFuturesClient:
         result = self._request("POST", "/fapi/v1/order", params=kwargs, signed=True)
         logger.info("Order placed successfully – orderId=%s status=%s", result.get("orderId"), result.get("status"))
         return result
+
+    def place_batch_orders(self, orders: list[dict]) -> list[dict]:
+        """
+        Place up to 5 orders in a single API call via /fapi/v1/batchOrders.
+        Each item in orders is a dict of standard order parameters.
+        """
+        if not orders:
+            raise ValueError("orders list cannot be empty.")
+        if len(orders) > 5:
+            raise ValueError("Batch orders are limited to 5 per request.")
+
+        logger.info("Placing batch of %d orders", len(orders))
+        for i, o in enumerate(orders):
+            logger.debug("  batch[%d]: %s", i, o)
+
+        params = {
+            "batchOrders": json.dumps(orders),
+        }
+        results = self._request("POST", "/fapi/v1/batchOrders", params=params, signed=True)
+        logger.info("Batch order response received – %d results", len(results))
+        return results
 
 
 def _sanitise(params: dict) -> dict:
