@@ -1,0 +1,18 @@
+# credentials - never commit this
+.env
+
+# virtual environment
+.venv/
+venv/
+env/
+
+# python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# mac junk
+.DS_Store
+
+# logs (optional - comment out if you want to include sample logs)
+# logs/
