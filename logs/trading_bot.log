@@ -1,0 +1,29 @@
+2026-03-28 05:10:05 | DEBUG    | trading_bot | Building MARKET order params symbol=BTCUSDT side=BUY qty=0.01
+2026-03-28 05:10:05 | INFO     | trading_bot | Placing order: symbol=BTCUSDT side=BUY type=MARKET qty=0.01 price=N/A
+2026-03-28 05:10:05 | DEBUG    | trading_bot | → POST https://testnet.binancefuture.com/fapi/v1/order  params={'symbol': 'BTCUSDT', 'side': 'BUY', 'type': 'MARKET', 'quantity': 0.01, 'timestamp': 1774654805008, 'recvWindow': 5000, 'signature': '***'}
+2026-03-28 05:10:05 | DEBUG    | trading_bot | ← HTTP 401  body={"code":-2014,"msg":"API-key format invalid."}
+2026-03-28 05:10:05 | ERROR    | trading_bot | API error -2014: API-key format invalid.
+2026-03-28 05:10:05 | ERROR    | trading_bot | Order failed – API returned error -2014: API-key format invalid.
+2026-03-28 05:10:22 | DEBUG    | trading_bot | Building LIMIT order params symbol=BTCUSDT side=BUY qty=0.01 price=60000.0 tif=GTC
+2026-03-28 05:10:22 | INFO     | trading_bot | Placing order: symbol=BTCUSDT side=BUY type=LIMIT qty=0.01 price=60000.0
+2026-03-28 05:10:22 | DEBUG    | trading_bot | → POST https://testnet.binancefuture.com/fapi/v1/order  params={'symbol': 'BTCUSDT', 'side': 'BUY', 'type': 'LIMIT', 'quantity': 0.01, 'price': 60000.0, 'timeInForce': 'GTC', 'timestamp': 1774654822955, 'recvWindow': 5000, 'signature': '***'}
+2026-03-28 05:10:23 | DEBUG    | trading_bot | ← HTTP 401  body={"code":-2014,"msg":"API-key format invalid."}
+2026-03-28 05:10:23 | ERROR    | trading_bot | API error -2014: API-key format invalid.
+2026-03-28 05:10:23 | ERROR    | trading_bot | Order failed – API returned error -2014: API-key format invalid.
+2026-03-28 19:09:25 | DEBUG    | trading_bot | Building LIMIT order params symbol=BTCUSDT side=BUY qty=0.01 price=60000.0 tif=GTC
+2026-03-28 19:09:25 | INFO     | trading_bot | Placing order: symbol=BTCUSDT side=BUY type=LIMIT qty=0.01 price=60000.0
+2026-03-28 19:09:25 | DEBUG    | trading_bot | → POST https://testnet.binancefuture.com/fapi/v1/order  params={'symbol': 'BTCUSDT', 'side': 'BUY', 'type': 'LIMIT', 'quantity': 0.01, 'price': 60000.0, 'timeInForce': 'GTC', 'timestamp': 1774705165170, 'recvWindow': 5000, 'signature': '***'}
+2026-03-28 19:09:25 | DEBUG    | trading_bot | ← HTTP 401  body={"code":-2015,"msg":"Invalid API-key, IP, or permissions for action"}
+2026-03-28 19:09:25 | ERROR    | trading_bot | API error -2015: Invalid API-key, IP, or permissions for action
+2026-03-28 19:09:25 | ERROR    | trading_bot | Order failed – API returned error -2015: Invalid API-key, IP, or permissions for action
+2026-03-28 19:10:22 | DEBUG    | trading_bot | Building LIMIT order params symbol=BTCUSDT side=BUY qty=0.01 price=60000.0 tif=GTC
+2026-03-28 19:10:22 | INFO     | trading_bot | Placing order: symbol=BTCUSDT side=BUY type=LIMIT qty=0.01 price=60000.0
+2026-03-28 19:10:22 | DEBUG    | trading_bot | → POST https://testnet.binancefuture.com/fapi/v1/order  params={'symbol': 'BTCUSDT', 'side': 'BUY', 'type': 'LIMIT', 'quantity': 0.01, 'price': 60000.0, 'timeInForce': 'GTC', 'timestamp': 1774705222065, 'recvWindow': 5000, 'signature': '***'}
+2026-03-28 19:10:22 | DEBUG    | trading_bot | ← HTTP 401  body={"code":-2015,"msg":"Invalid API-key, IP, or permissions for action"}
+2026-03-28 19:10:22 | ERROR    | trading_bot | API error -2015: Invalid API-key, IP, or permissions for action
+2026-03-28 19:10:22 | ERROR    | trading_bot | Order failed – API returned error -2015: Invalid API-key, IP, or permissions for action
+2026-03-28 19:13:45 | DEBUG    | trading_bot | Building LIMIT order params symbol=BTCUSDT side=BUY qty=0.01 price=60000.0 tif=GTC
+2026-03-28 19:13:45 | INFO     | trading_bot | Placing order: symbol=BTCUSDT side=BUY type=LIMIT qty=0.01 price=60000.0
+2026-03-28 19:13:45 | DEBUG    | trading_bot | → POST https://testnet.binancefuture.com/fapi/v1/order  params={'symbol': 'BTCUSDT', 'side': 'BUY', 'type': 'LIMIT', 'quantity': 0.01, 'price': 60000.0, 'timeInForce': 'GTC', 'timestamp': 1774705425811, 'recvWindow': 5000, 'signature': '***'}
+2026-03-28 19:13:46 | DEBUG    | trading_bot | ← HTTP 200  body={"orderId":13002236695,"symbol":"BTCUSDT","status":"NEW","clientOrderId":"kT3JF1RD5twiW8PBiJvBJB","price":"60000.00","avgPrice":"0.00","origQty":"0.010","executedQty":"0.000","cumQty":"0.000","cumQuote":"0.00000","timeInForce":"GTC","type":"LIMIT","reduceOnly":false,"closePosition":false,"side":"BUY","positionSide":"BOTH","stopPrice":"0.00","workingType":"CONTRACT_PRICE","priceProtect":false,"origType":"LIMIT","priceMatch":"NONE","selfTradePreventionMode":"EXPIRE_MAKER","goodTillDate":0,"updateT
+2026-03-28 19:13:46 | INFO     | trading_bot | Order placed successfully – orderId=13002236695 status=NEW
